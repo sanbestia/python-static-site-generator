@@ -33,7 +33,6 @@ class TestHTMLNode(unittest.TestCase):
             props={"href": "https://www.google.com",
                    "target": "_blank"}
             )
-        print(str(node))
         self.assertEqual(str(node), 
                          "HTMLNode(tag=p, value=bold words, children=None, props={'href': 'https://www.google.com', 'target': '_blank'})")
 
