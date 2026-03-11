@@ -76,9 +76,34 @@ def extract_markdown_links(text):
     return re.findall(r'(?<!!)\[(.*?)\]\((.*?)\)', text)
 
 
-def raw_to_paragraph(text):
+def raw_to_html_paragraph(text):
     return f"<p>{text}</p>"
 
-def raw_to_link(text, link):
+def raw_to_html_heading(text, level):
+    if level < 1 or level > 6:
+        raise ValueError('Heading level must be between 1 and 6')
+    return f'<h{level}>text</h{level}>'
+
+def raw_to_html_bold(text):
+    return f'<b>{text}</b>'
+
+def raw_to_html_italic(text).
+    return f'<i>{text}</i>'
+
+def raw_to_html_link(text, link):
     return f'<a href="{link}">{text}</a>'
 
+def raw_to_html_image(text, link):
+    return f'<img src="{link}" alt="{text}" />'
+
+def raw_to_html_unordered_list(text_lines):
+    return f'<ul>\n{"".join('<li>' + text + '</li>\n' for text in text_lines)}</ul>'
+
+def raw_to_html_ordered_list(text_lines):
+    return f'<ol>\n{"".join('<li>' + text + '</li>\n' for text in text_lines)}</ol>'
+
+def raw_to_html_quote(text_lines):
+    return f'<blockquote>{"".join('<p>' + text + '</p>\n' for text in text_lines)}</blockquote>'
+    
+def raw_to_html_code(text_lines):
+    return f'<pre><code>{"".join(text + '\n' for text in text_lines)}</code></pre>'
