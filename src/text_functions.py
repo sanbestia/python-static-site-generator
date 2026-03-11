@@ -31,8 +31,8 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         raise ValueError('Error: Invalid text type')
     return _split_nodes(
         old_nodes,
-        pattern=fr'{re.escape(delimiter)}(.*?){re.escape(delimiter)}',
-        make_node=lambda m: TextNode(m.group(1), text_type),
+        pattern=fr'({re.escape(delimiter)}.*?{re.escape(delimiter)})',
+        make_node=lambda m: TextNode(m.group(1), text_type),  # group(1) = full match with delimiters
     )
 
 

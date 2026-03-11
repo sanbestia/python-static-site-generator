@@ -1,5 +1,5 @@
 from htmlnode import HTMLNode
-from functions import raw_to_link, raw_to_paragraph
+from text_functions import raw_to_link, raw_to_paragraph
 
 class LeafNode(HTMLNode):
     def __init__(self, tag, value, props=None):

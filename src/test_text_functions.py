@@ -2,7 +2,7 @@ import re
 import pytest
 from enum import Enum
 from textnode import TextNode, TextType
-from functions import split_nodes_delimiter, split_nodes_image, split_nodes_link
+from text_functions import split_nodes_delimiter, split_nodes_image, split_nodes_link
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ class TestSplitNodesDelimiterValidation:
             split_nodes_delimiter([T("hi")], "!", TextType.IMAGE)
 
     def test_accepts_bold(self):
-        result = split_nodes_delimiter([T("**b**")], r"\*\*", TextType.BOLD)
+        result = split_nodes_delimiter([T("**b**")], "**", TextType.BOLD)
         assert any(n.text_type == TextType.BOLD for n in result)
 
     def test_accepts_italic(self):
@@ -119,7 +119,7 @@ class TestSplitNodesDelimiterBold:
 
     def test_bold_basic(self):
         node   = T("this is **bold** text")
-        result = split_nodes_delimiter([node], r"\*\*", TextType.BOLD)
+        result = split_nodes_delimiter([node], "**", TextType.BOLD)
         assert result == [
             T("this is "),
             T("**bold**", TextType.BOLD),
@@ -128,7 +128,7 @@ class TestSplitNodesDelimiterBold:
 
     def test_multiple_bold(self):
         node   = T("**a** and **b**")
-        result = split_nodes_delimiter([node], r"\*\*", TextType.BOLD)
+        result = split_nodes_delimiter([node], "**", TextType.BOLD)
         assert result == [
             T("**a**", TextType.BOLD),
             T(" and "),
@@ -539,7 +539,7 @@ class TestCrossFunctionIntegration:
 
     def test_full_pipeline(self):
         nodes = [T("**bold** `code` ![pic](p.png) [link](l.com)")]
-        step1 = split_nodes_delimiter(nodes, r"\*\*", TextType.BOLD)
+        step1 = split_nodes_delimiter(nodes, "**", TextType.BOLD)
         step2 = split_nodes_delimiter(step1, "`", TextType.CODE)
         step3 = split_nodes_image(step2)
         step4 = split_nodes_link(step3)
