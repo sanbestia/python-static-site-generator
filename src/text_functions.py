@@ -31,8 +31,8 @@ def split_nodes_delimiter(old_nodes, delimiter, text_type):
         raise ValueError('Error: Invalid text type')
     return _split_nodes(
         old_nodes,
-        pattern=fr'({re.escape(delimiter)}.*?{re.escape(delimiter)})',
-        make_node=lambda m: TextNode(m.group(1), text_type),  # group(1) = full match with delimiters
+        pattern=fr'{re.escape(delimiter)}(.*?){re.escape(delimiter)}',
+        make_node=lambda m: TextNode(m.group(1), text_type),
     )
 
 
@@ -55,15 +55,10 @@ def split_nodes_link(old_nodes):
 def text_to_textnodes(text):
     text_node = TextNode(text, TextType.TEXT)
     lst = [text_node]
-    print(lst)
     by_link = split_nodes_link(lst)
-    print(by_link)
     by_image_link = split_nodes_image(by_link)
-    print(by_image_link)
     by_image_link_bold = split_nodes_delimiter(by_image_link, "**", TextType.BOLD)
-    print(by_image_link_bold)
     by_image_link_bold_italic = split_nodes_delimiter(by_image_link_bold, "_", TextType.ITALIC)
-    print(by_image_link_bold_italic)
     by_image_link_bold_italic_code = split_nodes_delimiter(by_image_link_bold_italic, "`", TextType.CODE)
     return by_image_link_bold_italic_code
 
@@ -75,35 +70,3 @@ def extract_markdown_images(text):
 def extract_markdown_links(text):
     return re.findall(r'(?<!!)\[(.*?)\]\((.*?)\)', text)
 
-
-def raw_to_html_paragraph(text):
-    return f"<p>{text}</p>"
-
-def raw_to_html_heading(text, level):
-    if level < 1 or level > 6:
-        raise ValueError('Heading level must be between 1 and 6')
-    return f'<h{level}>text</h{level}>'
-
-def raw_to_html_bold(text):
-    return f'<b>{text}</b>'
-
-def raw_to_html_italic(text).
-    return f'<i>{text}</i>'
-
-def raw_to_html_link(text, link):
-    return f'<a href="{link}">{text}</a>'
-
-def raw_to_html_image(text, link):
-    return f'<img src="{link}" alt="{text}" />'
-
-def raw_to_html_unordered_list(text_lines):
-    return f'<ul>\n{"".join('<li>' + text + '</li>\n' for text in text_lines)}</ul>'
-
-def raw_to_html_ordered_list(text_lines):
-    return f'<ol>\n{"".join('<li>' + text + '</li>\n' for text in text_lines)}</ol>'
-
-def raw_to_html_quote(text_lines):
-    return f'<blockquote>{"".join('<p>' + text + '</p>\n' for text in text_lines)}</blockquote>'
-    
-def raw_to_html_code(text_lines):
-    return f'<pre><code>{"".join(text + '\n' for text in text_lines)}</code></pre>'

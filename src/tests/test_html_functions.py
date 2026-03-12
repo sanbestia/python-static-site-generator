@@ -2,23 +2,30 @@ import re
 import pytest
 from enum import Enum
 from blocktype import BlockType
-from html_functions import block_to_block_type
+from html_functions import block_to_block_type, text_to_children, markdown_to_html_node
+from textnode import TextType
 
 
 # ── HEADING ──────────────────────────────────────────────────────────────────
 
 class TestHeading:
     def test_h1(self):
-        assert block_to_block_type('# Heading') == BlockType.HEADING
+        assert block_to_block_type('# Heading') == BlockType.HEADING_FIRST
 
     def test_h2(self):
-        assert block_to_block_type('## Another heading') == BlockType.HEADING
+        assert block_to_block_type('## Another heading') == BlockType.HEADING_SECOND
 
     def test_h3(self):
-        assert block_to_block_type('### Another nother heading') == BlockType.HEADING
+        assert block_to_block_type('### Another nother heading') == BlockType.HEADING_THIRD
+
+    def test_h4(self):
+        assert block_to_block_type('#### Fourth heading') == BlockType.HEADING_FOURTH
+
+    def test_h5(self):
+        assert block_to_block_type('##### Fifth heading') == BlockType.HEADING_FIFTH
 
     def test_h6_max_valid(self):
-        assert block_to_block_type('###### Max level heading') == BlockType.HEADING
+        assert block_to_block_type('###### Max level heading') == BlockType.HEADING_SIXTH
 
     def test_h7_too_many_hashes(self):
         assert block_to_block_type('####### Too many hashes') == BlockType.PARAGRAPH
@@ -135,3 +142,126 @@ class TestParagraph:
 
     def test_mixed_markers(self):
         assert block_to_block_type('Mixed # heading and > quote') == BlockType.PARAGRAPH
+
+
+# ── TEXT TO CHILDREN ──────────────────────────────────────────────────────────
+
+class TestTextToChildren:
+    def test_plain_text(self):
+        children = text_to_children("hello world")
+        assert len(children) == 1
+        assert children[0].value == "hello world"
+        assert children[0].tag == TextType.TEXT
+
+    def test_bold(self):
+        children = text_to_children("this is **bold** text")
+        types = [c.tag for c in children]
+        assert TextType.BOLD in types
+        bold = next(c for c in children if c.tag == TextType.BOLD)
+        assert bold.value == "bold"
+
+    def test_italic(self):
+        children = text_to_children("this is _italic_ text")
+        types = [c.tag for c in children]
+        assert TextType.ITALIC in types
+        italic = next(c for c in children if c.tag == TextType.ITALIC)
+        assert italic.value == "italic"
+
+    def test_inline_code(self):
+        children = text_to_children("use `print()` here")
+        types = [c.tag for c in children]
+        assert TextType.CODE in types
+        code = next(c for c in children if c.tag == TextType.CODE)
+        assert code.value == "print()"
+
+    def test_link(self):
+        children = text_to_children("[click](http://x.com)")
+        link = next(c for c in children if c.tag == TextType.LINK)
+        assert link.value == "click"
+        assert link.props == {"href": "http://x.com"}
+
+    def test_image(self):
+        children = text_to_children("![alt](img.png)")
+        img = next(c for c in children if c.tag == TextType.IMAGE)
+        assert img.value == "alt"
+        assert img.props == {"src": "img.png"}
+
+    def test_mixed_inline(self):
+        children = text_to_children("**bold** and _italic_ and `code`")
+        types = {c.tag for c in children}
+        assert TextType.BOLD   in types
+        assert TextType.ITALIC in types
+        assert TextType.CODE   in types
+
+    def test_empty_string(self):
+        children = text_to_children("")
+        assert children == []
+
+
+# ── MARKDOWN TO HTML NODE ─────────────────────────────────────────────────────
+
+class TestMarkdownToHtmlNode:
+    def test_simple_paragraph(self):
+        html = markdown_to_html_node("Hello world").to_html()
+        assert "<p>" in html
+        assert "Hello world" in html
+        assert html.startswith("<div>")
+
+    def test_bold_in_paragraph(self):
+        html = markdown_to_html_node("this is **bold** text").to_html()
+        assert "<strong>bold</strong>" in html
+
+    def test_italic_in_paragraph(self):
+        html = markdown_to_html_node("this is _italic_ text").to_html()
+        assert "<em>italic</em>" in html
+
+    def test_inline_code_in_paragraph(self):
+        html = markdown_to_html_node("use `print()` here").to_html()
+        assert "<code>print()</code>" in html
+
+    def test_code_block_raw(self):
+        md = "```\nThis is text that _should_ remain\nthe **same** even with inline stuff\n```"
+        html = markdown_to_html_node(md).to_html()
+        assert "<pre><code>" in html
+        assert "_should_" in html
+        assert "**same**" in html
+        assert "<em>" not in html
+        assert "<strong>" not in html
+
+    def test_code_block_no_extra_backticks(self):
+        md = "```\nsome code\n```"
+        html = markdown_to_html_node(md).to_html()
+        assert "```" not in html
+
+    def test_heading_h1(self):
+        html = markdown_to_html_node("# Title").to_html()
+        assert "<h1>" in html
+        assert "Title" in html
+
+    def test_heading_h2(self):
+        html = markdown_to_html_node("## Subtitle").to_html()
+        assert "<h2>" in html
+
+    def test_unordered_list(self):
+        html = markdown_to_html_node("- one\n- two\n- three").to_html()
+        assert "<ul>" in html
+
+    def test_ordered_list(self):
+        html = markdown_to_html_node("1. first\n2. second").to_html()
+        assert "<ol>" in html
+
+    def test_quote(self):
+        html = markdown_to_html_node("> a quote").to_html()
+        assert "<blockquote>" in html
+
+    def test_multiple_blocks(self):
+        md = "# Heading\n\nA paragraph\n\n```\ncode\n```"
+        html = markdown_to_html_node(md).to_html()
+        assert "<h1>" in html
+        assert "<p>" in html
+        assert "<pre><code>" in html
+
+    def test_wrapped_in_div(self):
+        html = markdown_to_html_node("hello").to_html()
+        assert html.startswith("<div>")
+        assert html.endswith("</div>")

@@ -56,13 +56,12 @@ class TestSplitNodesDelimiterEmptyAndTrivial:
     def test_empty_string_node(self):
         node   = T("")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
-        # no matches, prev_end (0) == len("") (0) → nothing appended
         assert result == []
 
     def test_only_delimiter_pair(self):
         node   = T("``")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
-        assert result == [T("``", TextType.CODE)]
+        assert result == [T("", TextType.CODE)]
 
 
 class TestSplitNodesDelimiterCodeBasic:
@@ -72,7 +71,7 @@ class TestSplitNodesDelimiterCodeBasic:
         result = split_nodes_delimiter([node], "`", TextType.CODE)
         assert result == [
             T("hello "),
-            T("`world`", TextType.CODE),
+            T("world", TextType.CODE),
             T(" today"),
         ]
 
@@ -80,7 +79,7 @@ class TestSplitNodesDelimiterCodeBasic:
         node   = T("`code` after")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
         assert result == [
-            T("`code`", TextType.CODE),
+            T("code", TextType.CODE),
             T(" after"),
         ]
 
@@ -89,29 +88,29 @@ class TestSplitNodesDelimiterCodeBasic:
         result = split_nodes_delimiter([node], "`", TextType.CODE)
         assert result == [
             T("before "),
-            T("`code`", TextType.CODE),
+            T("code", TextType.CODE),
         ]
 
     def test_code_only(self):
         node   = T("`onlycode`")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
-        assert result == [T("`onlycode`", TextType.CODE)]
+        assert result == [T("onlycode", TextType.CODE)]
 
     def test_multiple_code_spans(self):
         node   = T("`a` and `b`")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
         assert result == [
-            T("`a`", TextType.CODE),
+            T("a", TextType.CODE),
             T(" and "),
-            T("`b`", TextType.CODE),
+            T("b", TextType.CODE),
         ]
 
     def test_adjacent_code_spans(self):
         node   = T("`a``b`")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
         assert result == [
-            T("`a`", TextType.CODE),
-            T("`b`", TextType.CODE),
+            T("a", TextType.CODE),
+            T("b", TextType.CODE),
         ]
 
 
@@ -122,7 +121,7 @@ class TestSplitNodesDelimiterBold:
         result = split_nodes_delimiter([node], "**", TextType.BOLD)
         assert result == [
             T("this is "),
-            T("**bold**", TextType.BOLD),
+            T("bold", TextType.BOLD),
             T(" text"),
         ]
 
@@ -130,9 +129,9 @@ class TestSplitNodesDelimiterBold:
         node   = T("**a** and **b**")
         result = split_nodes_delimiter([node], "**", TextType.BOLD)
         assert result == [
-            T("**a**", TextType.BOLD),
+            T("a", TextType.BOLD),
             T(" and "),
-            T("**b**", TextType.BOLD),
+            T("b", TextType.BOLD),
         ]
 
 
@@ -143,7 +142,7 @@ class TestSplitNodesDelimiterItalic:
         result = split_nodes_delimiter([node], "_", TextType.ITALIC)
         assert result == [
             T("this is "),
-            T("_italic_", TextType.ITALIC),
+            T("italic", TextType.ITALIC),
             T(" text"),
         ]
 
@@ -151,9 +150,9 @@ class TestSplitNodesDelimiterItalic:
         node   = T("_a_ mid _b_")
         result = split_nodes_delimiter([node], "_", TextType.ITALIC)
         assert result == [
-            T("_a_", TextType.ITALIC),
+            T("a", TextType.ITALIC),
             T(" mid "),
-            T("_b_", TextType.ITALIC),
+            T("b", TextType.ITALIC),
         ]
 
 
@@ -162,21 +161,20 @@ class TestSplitNodesDelimiterNonTextNodes:
     def test_non_text_node_is_passed_through(self):
         bold_node = T("already bold", TextType.BOLD)
         result    = split_nodes_delimiter([bold_node], "`", TextType.CODE)
-        # non-TEXT node is appended; then its text is also processed
         assert T("already bold", TextType.BOLD) in result
 
     def test_mixed_text_and_non_text(self):
         nodes  = [T("hello `x`"), T("img", TextType.IMAGE, "u.png")]
         result = split_nodes_delimiter(nodes, "`", TextType.CODE)
         assert T("hello ") in result
-        assert T("`x`", TextType.CODE) in result
+        assert T("x", TextType.CODE) in result
         assert T("img", TextType.IMAGE, "u.png") in result
 
     def test_multiple_plain_nodes(self):
         nodes  = [T("one `a` two"), T("three `b` four")]
         result = split_nodes_delimiter(nodes, "`", TextType.CODE)
-        assert T("`a`", TextType.CODE) in result
-        assert T("`b`", TextType.CODE) in result
+        assert T("a", TextType.CODE) in result
+        assert T("b", TextType.CODE) in result
 
 
 class TestSplitNodesDelimiterEdgeCases:
@@ -184,12 +182,12 @@ class TestSplitNodesDelimiterEdgeCases:
     def test_whitespace_inside_delimiter(self):
         node   = T("` code `")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
-        assert result == [T("` code `", TextType.CODE)]
+        assert result == [T(" code ", TextType.CODE)]
 
     def test_delimiter_content_with_special_chars(self):
         node   = T("`x + y`")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
-        assert result == [T("`x + y`", TextType.CODE)]
+        assert result == [T("x + y", TextType.CODE)]
 
     def test_unmatched_delimiter_treated_as_plain(self):
         node   = T("hello `world")
@@ -197,11 +195,10 @@ class TestSplitNodesDelimiterEdgeCases:
         assert result == [T("hello `world")]
 
     def test_three_delimiters_first_pair_matches(self):
-        # "`a``b`" → first match "`a`", then "`b`"
         node   = T("`a``b`")
         result = split_nodes_delimiter([node], "`", TextType.CODE)
-        assert T("`a`", TextType.CODE) in result
-        assert T("`b`", TextType.CODE) in result
+        assert T("a", TextType.CODE) in result
+        assert T("b", TextType.CODE) in result
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -324,14 +321,12 @@ class TestSplitNodesImageEdgeCases:
     def test_link_without_bang_not_matched(self):
         node   = T("[not an image](url.png)")
         result = split_nodes_image([node])
-        # no image pattern → just plain text
         assert result == [T("[not an image](url.png)")]
 
     def test_image_followed_by_link(self):
         node   = T("![img](i.png)[link](l.com)")
         result = split_nodes_image([node])
         assert T("img", TextType.IMAGE, "i.png") in result
-        # "[link](l.com)" is leftover text, not an IMAGE node
         assert T("[link](l.com)") in result
 
     def test_multiple_nodes_each_with_image(self):
@@ -346,7 +341,7 @@ class TestSplitNodesImageEdgeCases:
         node   = T("just text")
         result = split_nodes_image([node])
         assert result == [T("just text")]
-        assert result[0] is not node   # new object created
+        assert result[0] is not node
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -449,14 +444,12 @@ class TestSplitNodesLinkImageExclusion:
     def test_image_syntax_not_matched_as_link(self):
         node   = T("![alt](img.png)")
         result = split_nodes_link([node])
-        # negative lookbehind ?<!! ensures images are not treated as links
         assert result == [T("![alt](img.png)")]
 
     def test_image_and_link_together(self):
         node   = T("![img](i.png) [link](l.com)")
         result = split_nodes_link([node])
         assert T("link", TextType.LINK, "l.com") in result
-        # image markup stays as plain text
         assert T("![img](i.png) ") in result
 
     def test_link_immediately_after_image(self):
@@ -500,10 +493,8 @@ class TestSplitNodesLinkEdgeCases:
         assert result == [T("just text")]
 
     def test_nested_brackets_outermost_match(self):
-        # Only the outermost [] are matched by the non-greedy regex
         node   = T("[a [b]](url)")
         result = split_nodes_link([node])
-        # inner bracket breaks the non-greedy match; "a " becomes the text
         assert any(n.text_type == TextType.LINK for n in result)
 
 
