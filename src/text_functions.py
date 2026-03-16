@@ -3,11 +3,6 @@ from htmlnode import HTMLNode
 import re
 
 
-def text_node_to_html_node(text_node):
-    pass
-
-
-
 def _split_nodes(old_nodes, pattern, make_node):
     new_nodes = []
     for old_node in old_nodes:

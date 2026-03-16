@@ -1,16 +1,12 @@
-from src.textnode import TextType, TextNode
-
-
-def create_text_node(text, text_type, url):
-    return TextNode(text, text_type, url)
+from file_functions import copy_dir_content
+import os
 
 
 def main():
-    text = "I'm some dummy anchor text"
-    text_type = TextType.LINK
-    url = "dummysite.com"
-    text_node = create_text_node(text, text_type, url)
-    print(text_node)
+    root_dir = os.path.abspath('.')
+    static_dir = os.path.join(root_dir, 'static/')
+    public_dir = os.path.join(root_dir, 'public/')
+    copy_dir_content(static_dir, public_dir)
     
     
 if __name__ == '__main__':
