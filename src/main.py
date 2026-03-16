@@ -1,4 +1,4 @@
-from html_functions import generate_page
+from html_functions import generate_pages_recursively
 from file_functions import copy_dir_content
 import os
 
@@ -10,10 +10,11 @@ def main():
     public_dir = os.path.join(root_dir, 'public/')
     copy_dir_content(static_dir, public_dir)
     
-    from_path = os.path.join(root_dir, 'content/index.md')
+    
+    from_path = os.path.join(root_dir, 'content/')
     template_path = os.path.join(root_dir, 'template.html')
-    dest_path = os.path.join(root_dir, 'public/index.html')
-    generate_page(from_path, template_path, dest_path)
+    dest_path = os.path.join(root_dir, 'public/')
+    generate_pages_recursively(from_path, template_path, dest_path)
     
     
 if __name__ == '__main__':

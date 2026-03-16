@@ -48,12 +48,3 @@ def copy_dir_content(source_dir, target_dir):
     # Copy source dir into target_dir
     copy_dir_content_r(full_source_dir, full_target_dir)
     
-    
-""" def get_index_paths(dir):
-    try:
-        check_dir(dir)
-    except Exception as e:
-        logger.error(e)
-    path_list = os.listdir(dir)
-    for path in path_list:
-         """
