@@ -2,7 +2,11 @@ import re
 import pytest
 from enum import Enum
 from textnode import TextNode, TextType
-from text_functions import split_nodes_delimiter, split_nodes_image, split_nodes_link
+from text_functions import (
+    split_nodes_delimiter, split_nodes_image, split_nodes_link,
+    extract_markdown_images, extract_markdown_links,
+    text_to_textnodes, extract_title,
+)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -539,3 +543,150 @@ class TestCrossFunctionIntegration:
         assert TextType.CODE  in types
         assert TextType.IMAGE in types
         assert TextType.LINK  in types
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  extract_markdown_images
+# ════════════════════════════════════════════════════════════════════════════
+
+class TestExtractMarkdownImages:
+
+    def test_single_image(self):
+        assert extract_markdown_images("![alt](url.png)") == [("alt", "url.png")]
+
+    def test_multiple_images(self):
+        result = extract_markdown_images("![a](a.png) ![b](b.png)")
+        assert result == [("a", "a.png"), ("b", "b.png")]
+
+    def test_no_images(self):
+        assert extract_markdown_images("plain text") == []
+
+    def test_empty_string(self):
+        assert extract_markdown_images("") == []
+
+    def test_link_not_matched(self):
+        assert extract_markdown_images("[not an image](url)") == []
+
+    def test_empty_alt_text(self):
+        assert extract_markdown_images("![](url.png)") == [("", "url.png")]
+
+    def test_empty_url(self):
+        assert extract_markdown_images("![alt]()") == [("alt", "")]
+
+    def test_image_and_link_mixed(self):
+        result = extract_markdown_images("![img](i.png) [link](l.com)")
+        assert result == [("img", "i.png")]
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  extract_markdown_links
+# ════════════════════════════════════════════════════════════════════════════
+
+class TestExtractMarkdownLinks:
+
+    def test_single_link(self):
+        assert extract_markdown_links("[click](http://x.com)") == [("click", "http://x.com")]
+
+    def test_multiple_links(self):
+        result = extract_markdown_links("[a](u1) [b](u2)")
+        assert result == [("a", "u1"), ("b", "u2")]
+
+    def test_no_links(self):
+        assert extract_markdown_links("plain text") == []
+
+    def test_empty_string(self):
+        assert extract_markdown_links("") == []
+
+    def test_image_not_matched(self):
+        assert extract_markdown_links("![alt](url.png)") == []
+
+    def test_empty_link_text(self):
+        assert extract_markdown_links("[](url)") == [("", "url")]
+
+    def test_empty_url(self):
+        assert extract_markdown_links("[text]()") == [("text", "")]
+
+    def test_image_and_link_mixed(self):
+        result = extract_markdown_links("![img](i.png) [link](l.com)")
+        assert result == [("link", "l.com")]
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  text_to_textnodes
+# ════════════════════════════════════════════════════════════════════════════
+
+class TestTextToTextNodes:
+
+    def test_plain_text(self):
+        result = text_to_textnodes("hello world")
+        assert result == [T("hello world")]
+
+    def test_bold(self):
+        result = text_to_textnodes("this is **bold** text")
+        assert T("bold", TextType.BOLD) in result
+
+    def test_italic(self):
+        result = text_to_textnodes("this is _italic_ text")
+        assert T("italic", TextType.ITALIC) in result
+
+    def test_code(self):
+        result = text_to_textnodes("use `print()` here")
+        assert T("print()", TextType.CODE) in result
+
+    def test_link(self):
+        result = text_to_textnodes("[click](http://x.com)")
+        assert T("click", TextType.LINK, "http://x.com") in result
+
+    def test_image(self):
+        result = text_to_textnodes("![alt](img.png)")
+        assert T("alt", TextType.IMAGE, "img.png") in result
+
+    def test_all_types(self):
+        text = "**bold** _italic_ `code` [link](u) ![img](i.png)"
+        result = text_to_textnodes(text)
+        types = {n.text_type for n in result}
+        assert TextType.BOLD   in types
+        assert TextType.ITALIC in types
+        assert TextType.CODE   in types
+        assert TextType.LINK   in types
+        assert TextType.IMAGE  in types
+
+    def test_empty_string(self):
+        assert text_to_textnodes("") == []
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  extract_title
+# ════════════════════════════════════════════════════════════════════════════
+
+class TestExtractTitle:
+
+    def test_basic_h1(self):
+        assert extract_title("# My Title") == "My Title"
+
+    def test_title_with_trailing_whitespace(self):
+        assert extract_title("# Hello World  ") == "Hello World  "
+
+    def test_title_among_other_content(self):
+        md = "Some intro\n\n# The Title\n\nA paragraph"
+        assert extract_title(md) == "The Title"
+
+    def test_no_title_raises(self):
+        with pytest.raises(Exception, match="No title found"):
+            extract_title("## Not a title\n\nsome text")
+
+    def test_empty_string_raises(self):
+        with pytest.raises(Exception, match="No title found"):
+            extract_title("")
+
+    def test_multiple_h1_raises(self):
+        with pytest.raises(Exception, match="More than one"):
+            extract_title("# First\n\n# Second")
+
+    def test_h1_inside_code_block_ignored(self):
+        md = "```\n# not a title\n```\n\n# Real Title"
+        assert extract_title(md) == "Real Title"
+
+    def test_h2_not_matched(self):
+        with pytest.raises(Exception):
+            extract_title("## subtitle only")

@@ -10,11 +10,11 @@ class TestLeafNode(unittest.TestCase):
 
     def test_bold(self):
         node = LeafNode(TextType.BOLD, "bold text")
-        self.assertEqual(node.to_html(), "<strong>bold text</strong>")
+        self.assertEqual(node.to_html(), "<b>bold text</b>")
 
     def test_italic(self):
         node = LeafNode(TextType.ITALIC, "italic text")
-        self.assertEqual(node.to_html(), "<em>italic text</em>")
+        self.assertEqual(node.to_html(), "<i>italic text</i>")
 
     def test_code(self):
         node = LeafNode(TextType.CODE, "print('hi')")

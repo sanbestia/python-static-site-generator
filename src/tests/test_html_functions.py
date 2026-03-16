@@ -2,7 +2,12 @@ import re
 import pytest
 from enum import Enum
 from blocktype import BlockType
-from html_functions import block_to_block_type, text_to_children, markdown_to_html_node
+from html_functions import (
+    block_to_block_type, text_to_children, markdown_to_html_node,
+    markdown_to_blocks,
+    unordered_list_to_children, ordered_list_to_children,
+    quote_to_children, multiline_code_to_child,
+)
 from textnode import TextType
 
 
@@ -209,11 +214,11 @@ class TestMarkdownToHtmlNode:
 
     def test_bold_in_paragraph(self):
         html = markdown_to_html_node("this is **bold** text").to_html()
-        assert "<strong>bold</strong>" in html
+        assert "<b>bold</b>" in html
 
     def test_italic_in_paragraph(self):
         html = markdown_to_html_node("this is _italic_ text").to_html()
-        assert "<em>italic</em>" in html
+        assert "<i>italic</i>" in html
 
     def test_inline_code_in_paragraph(self):
         html = markdown_to_html_node("use `print()` here").to_html()
@@ -265,3 +270,99 @@ class TestMarkdownToHtmlNode:
         html = markdown_to_html_node("hello").to_html()
         assert html.startswith("<div>")
         assert html.endswith("</div>")
+
+
+# ── MARKDOWN TO BLOCKS ────────────────────────────────────────────────────────
+
+class TestMarkdownToBlocks:
+
+    def test_single_block(self):
+        assert markdown_to_blocks("hello world") == ["hello world"]
+
+    def test_two_blocks(self):
+        assert markdown_to_blocks("block one\n\nblock two") == ["block one", "block two"]
+
+    def test_three_blocks(self):
+        result = markdown_to_blocks("a\n\nb\n\nc")
+        assert result == ["a", "b", "c"]
+
+    def test_strips_surrounding_whitespace(self):
+        result = markdown_to_blocks("  hello  \n\n  world  ")
+        assert result == ["hello", "world"]
+
+    def test_preserves_internal_newlines(self):
+        result = markdown_to_blocks("line1\nline2\n\nother")
+        assert result[0] == "line1\nline2"
+
+    def test_empty_string_gives_one_empty_block(self):
+        assert markdown_to_blocks("") == [""]
+
+
+# ── HELPER FUNCTIONS ──────────────────────────────────────────────────────────
+
+class TestUnorderedListToChildren:
+
+    def test_single_item(self):
+        children = unordered_list_to_children("- item one")
+        assert len(children) == 1
+        assert children[0].to_html() == "<li>item one</li>"
+
+    def test_multiple_items(self):
+        children = unordered_list_to_children("- one\n- two\n- three")
+        assert len(children) == 3
+        assert children[1].to_html() == "<li>two</li>"
+
+    def test_inline_formatting_preserved(self):
+        children = unordered_list_to_children("- **bold** item")
+        html = children[0].to_html()
+        assert "<b>bold</b>" in html
+
+
+class TestOrderedListToChildren:
+
+    def test_single_item(self):
+        children = ordered_list_to_children("1. first")
+        assert len(children) == 1
+        assert children[0].to_html() == "<li>first</li>"
+
+    def test_multiple_items(self):
+        children = ordered_list_to_children("1. one\n2. two\n3. three")
+        assert len(children) == 3
+        assert children[2].to_html() == "<li>three</li>"
+
+    def test_strips_numbering(self):
+        children = ordered_list_to_children("1. item")
+        assert "1." not in children[0].to_html()
+
+
+class TestQuoteToChildren:
+
+    def test_single_line(self):
+        children = quote_to_children("> quoted text")
+        assert len(children) == 1
+        assert children[0].value == "quoted text"
+
+    def test_multiline_joined(self):
+        children = quote_to_children("> line one\n> line two")
+        combined = "".join(c.to_html() for c in children)
+        assert "line one" in combined
+        assert "line two" in combined
+
+    def test_strips_arrow_prefix(self):
+        children = quote_to_children(">no space")
+        assert children[0].value == "no space"
+
+
+class TestMultilineCodeToChild:
+
+    def test_basic(self):
+        node = multiline_code_to_child("```\nsome code\n```")
+        assert node.value == "some code\n"
+
+    def test_multiline_code(self):
+        node = multiline_code_to_child("```\nline1\nline2\n```")
+        assert node.value == "line1\nline2\n"
+
+    def test_backticks_stripped(self):
+        node = multiline_code_to_child("```\ncode\n```")
+        assert "```" not in node.value

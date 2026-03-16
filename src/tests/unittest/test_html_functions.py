@@ -206,11 +206,11 @@ class TestMarkdownToHtmlNode(unittest.TestCase):
 
     def test_bold_in_paragraph(self):
         html = markdown_to_html_node("this is **bold** text").to_html()
-        self.assertIn("<strong>bold</strong>", html)
+        self.assertIn("<b>bold</b>", html)
 
     def test_italic_in_paragraph(self):
         html = markdown_to_html_node("this is _italic_ text").to_html()
-        self.assertIn("<em>italic</em>", html)
+        self.assertIn("<i>italic</i>", html)
 
     def test_inline_code_in_paragraph(self):
         html = markdown_to_html_node("use `print()` here").to_html()
