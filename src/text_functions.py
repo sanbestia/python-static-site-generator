@@ -65,3 +65,15 @@ def extract_markdown_images(text):
 def extract_markdown_links(text):
     return re.findall(r'(?<!!)\[(.*?)\]\((.*?)\)', text)
 
+
+def extract_title(md): 
+    # Remove fenced code blocks
+    md_no_code = re.sub(r"```.*?```", "", md, flags=re.S)
+    
+    matches = re.findall(f"(?m)^# (.*)", md_no_code)
+    if not matches:
+        raise Exception('No title found in markdown file')
+    if len(matches) > 1:
+        raise Exception('More than one possible title found')
+    return matches[0]
+ 
