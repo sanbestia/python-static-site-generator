@@ -12,13 +12,13 @@ def main():
     root_dir = os.path.abspath('.')
     
     static_dir = os.path.join(root_dir, 'static/')
-    public_dir = os.path.join(root_dir, 'public/')
+    public_dir = os.path.join(root_dir, 'docs/')
     copy_dir_content(static_dir, public_dir)
     
     
     from_path = os.path.join(root_dir, 'content/')
     template_path = os.path.join(root_dir, 'template.html')
-    dest_path = os.path.join(root_dir, 'public/')
+    dest_path = os.path.join(root_dir, 'docs/')
     generate_pages_recursively(from_path, template_path, dest_path, basepath)
     
     
