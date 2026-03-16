@@ -4,13 +4,13 @@ def raw_to_html_paragraph(text):
 def raw_to_html_heading(text, level):
     if level < 1 or level > 6:
         raise ValueError('Heading level must be between 1 and 6')
-    return f'<h{level}>{text}</h{level}>'
+    return f'<h{level}>{text[level + 1:]}</h{level}>'
 
 def raw_to_html_bold(text):
-    return f'<strong>{text}</strong>'
+    return f'<b>{text}</b>'
 
 def raw_to_html_italic(text):
-    return f'<em>{text}</em>'
+    return f'<i>{text}</i>'
 
 def raw_to_html_link(text, link):
     return f'<a href="{link}">{text}</a>'
@@ -24,8 +24,8 @@ def raw_to_html_unordered_list(inner_text):
 def raw_to_html_ordered_list(inner_text):
     return f'<ol>\n{inner_text}</ol>'
 
-def raw_to_html_list_element(text):
-    return f'<li>{text}</li>\n'
+def raw_to_html_list_item(text):
+    return f'<li>{text}</li>'
 
 def raw_to_html_quote(inner_text):
     return f'<blockquote>{inner_text}</blockquote>'

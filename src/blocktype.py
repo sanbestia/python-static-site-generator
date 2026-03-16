@@ -6,6 +6,7 @@ class BlockType(Enum):
     QUOTE = "quote"
     UNORDERED_LIST = "unordered_list"
     ORDERED_LIST = "ordered_list"
+    LIST_ITEM = "list_item"
     HEADING_FIRST = "heading_first"
     HEADING_SECOND = "heading_second"
     HEADING_THIRD = "heading_third"

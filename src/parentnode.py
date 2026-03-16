@@ -36,11 +36,14 @@ class ParentNode(HTMLNode):
                 return raw_to_html_unordered_list(parsed_children)   
             case BlockType.ORDERED_LIST:
                 return raw_to_html_ordered_list(parsed_children)
+            case BlockType.LIST_ITEM:
+                return raw_to_html_list_item(parsed_children)
             case BlockType.QUOTE:
                 return raw_to_html_quote(parsed_children)
             case BlockType.MULTILINE_CODE:
                 return raw_to_html_codeblock(parsed_children)
             case BlockType.DIV:
                 return raw_to_html_div(parsed_children)
+        raise ValueError('Error: Block Type not found')
         
         
